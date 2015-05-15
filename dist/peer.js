@@ -1192,6 +1192,78 @@ Peer.prototype.listAllPeers = function(cb) {
   http.send(null);
 };
 
+// Generating Cast
+Peer.prototype.generateCast = function(castid, cb) {
+  cb = cb || function() {};
+  if (!castid) return;
+  var self = this;
+  var http = new XMLHttpRequest();
+  var protocol = this.options.secure ? 'https://' : 'http://';
+  var url = protocol + this.options.host + ':' + this.options.port +
+    this.options.path + this.options.key + '/' + this.id + '/' + castid + '/gencast';
+  var queryString = '?ts=' + new Date().getTime() + '' + Math.random();
+  url += queryString;
+
+  // If there's no ID we need to wait for one before trying to init socket.
+  http.open('post', url, true);
+  http.onerror = function(e) {
+    self._abort('server-error', 'Could not generate cast in server.');
+    cb(500);
+  };
+  http.onreadystatechange = function() {
+    if (http.readyState !== 4) {
+      return;
+    }
+    if (http.status === 404) {
+      var helpfulError = '';
+      helpfulError = 'Could note find Cast in database.';
+      cb(http.status);
+      throw new Error(helpfulError);
+    } else if (http.status !== 200) {
+      cb(http.status);
+    } else {
+      cb(http.status);
+    }
+  };
+  http.send(null);
+};
+
+// Get remote id from peerserver
+Peer.prototype.retrieveCastId = function(castid, cb) {
+  cb = cb || function() {};
+  if (!castid) return;
+  var self = this;
+  var http = new XMLHttpRequest();
+  var protocol = this.options.secure ? 'https://' : 'http://';
+  var url = protocol + this.options.host + ':' + this.options.port +
+    this.options.path + this.options.key + '/' + this.id + '/' + castid + '/castid';
+  var queryString = '?ts=' + new Date().getTime() + '' + Math.random();
+  url += queryString;
+
+  // If there's no ID we need to wait for one before trying to init socket.
+  http.open('get', url, true);
+  http.onerror = function(e) {
+    self._abort('server-error', 'Could not get cast id from server.');
+    cb('');
+  };
+  http.onreadystatechange = function() {
+    if (http.readyState !== 4) {
+      return;
+    }
+    if (http.status === 404) {
+      var helpfulError = '';
+      helpfulError = 'Counld not retriev cast id from server.';
+      cb('');
+      throw new Error('There are no cast. ' + helpfulError);
+    } else if (http.status !== 200) {
+      cb('');
+    } else {
+      cb(http.responseText);
+    }
+  };
+  http.send(null);
+};
+
 module.exports = Peer;
 
 },{"./dataconnection":2,"./mediaconnection":4,"./socket":7,"./util":8,"eventemitter3":9}],7:[function(require,module,exports){
